@@ -59,7 +59,7 @@ export async function postActivity(req: express.Request, res: express.Response) 
     ]);
 
     // Now lets send off an embed
-    const discordUser = bastion.getMember(user.id);
+    const discordUser = await bastion.getMember(user.id);
     const weekly = await getCurrentLogsForUser(user.id);
 
     // Create embed

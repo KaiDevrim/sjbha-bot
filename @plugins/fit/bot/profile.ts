@@ -9,6 +9,7 @@ import {createProfileEmbed} from "./embeds/ProfileEmbed";
 //
 export async function profile(req: Request) {
   const message = await req.reply("*Loading*");
+  const member = await req.getMember();
 
   const [user, summary] = await Promise.all([
     getUser(req.author.id),
@@ -16,7 +17,7 @@ export async function profile(req: Request) {
   ]);
 
   const embed = createProfileEmbed({
-    member    : req.getMember(),
+    member,
     user      : user.getProfile(),
     activities: summary.getDetails()
   });

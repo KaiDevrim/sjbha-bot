@@ -1,5 +1,5 @@
-import {reduce} from "lodash";
-import {Request} from "@services/bastion";
+import {map, reduce} from "lodash";
+import bastion, {DiscordMember, Request} from "@services/bastion";
 import {createLeaderboardEmbed} from "./embeds/LeaderboardEmbed";
 import {getAllUsers} from "../domain/user/UserRepository";
 
@@ -13,16 +13,12 @@ export async function leaderboard(req: Request) {
     return;
   }
 
-  const nicknames = reduce(
-    leaderboard,
-    (map, user) => {
-      const member = req.getMember(user.discordId);
-      map[user.discordId] = member.displayName;
-      return map;
-    },
-    {} as Record<string, string>
-  )
+  const getMember = async (discordId: string): Promise<[string, DiscordMember]> => [
+    discordId,
+    await req.getMember(discordId)
+  ];
 
+  const nicknames = await bastion.getNicknamesMap(leaderboard.map(u => u.discordId))
   const embed = createLeaderboardEmbed({
     users: leaderboard,
     nicknames

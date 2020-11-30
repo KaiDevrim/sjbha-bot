@@ -71,15 +71,38 @@ export default class Bastion extends Router {
     return channel.send(message);
   }
   
-  public getMember(discordId: string): DiscordMember {
-    const member = this.guild.member(discordId);
-    const user = this.client.users.cache.get(discordId);
+  public async getMember(discordId: string): Promise<DiscordMember> {
+    const resolve = (member: Discord.GuildMember, user: Discord.User): DiscordMember => 
+      Object.assign(member, {
+        avatar: user.avatarURL() || "https://cdn.discordapp.com/embed/avatars/0.png"
+      });
 
-    if (!member || !user) throw new MissingUser(`Could not get user with id ${discordId}`);
+    // If member is in cache, just return
+    const cachedMember = this.guild.member(discordId);
+    const cachedUser = this.client.users.cache.get(discordId);
+    if (cachedMember && cachedUser) return resolve(cachedMember, cachedUser);
 
-    return Object.assign(member, {
-      avatar: user.avatarURL() || "https://cdn.discordapp.com/embed/avatars/0.png"
-    });
+    // if not in cache, refresh
+    const [member, user] = await Promise.all([
+      this.guild.members.fetch(discordId),
+      this.client.users.fetch(discordId)
+    ])
+
+    if (!member || !user) {
+      console.error("Unable to get fetch discord member or user in `.getMember()`", {discordId, member, user})
+      throw new MissingUser(`Could not get user with id ${discordId}`);
+    }
+
+    return resolve(member, user);
+  }
+
+  public async getNicknamesMap(discordIds: string[]) {
+    return Promise
+      .all(discordIds.map(id => this.getMember(id)))
+      .then(members => members.reduce((res, m) => {
+        res[m.id] = m.displayName;
+        return res;
+      }, {} as Record<string, string>))
   }
   
 }

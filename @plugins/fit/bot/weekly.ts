@@ -53,12 +53,7 @@ export async function postWeeklyProgress() {
   await updateRankRoles(report.users);
 
   // Convert user IDs to hash map of nicknames
-  const userNameMap = report.users
-    .reduce<Record<string, string>>((map, user) => {
-      const member = bastion.getMember(user.discordId);
-      map[user.discordId] = member.displayName;
-      return map;
-    }, {});
+  const userNameMap = await bastion.getNicknamesMap(report.users.map(u => u.discordId))
 
   // get the biggest activity (+ details)
   const biggest = progress.getBiggestActivity();
@@ -91,7 +86,7 @@ async function updateRankRoles(users: SerializedUser[]) {
   debug("Updating roles for users")
 
   for (var i = 0; i < users.length; i++) {
-    const member = bastion.getMember(users[i].discordId);
+    const member = await bastion.getMember(users[i].discordId);
     const rank = new Rank(users[i].fitScore);
 
     switch (rank.rank) {

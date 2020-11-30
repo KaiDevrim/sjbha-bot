@@ -27,11 +27,12 @@ const errorHandlers: ErrorHandlers = {
  */
 export const add = request(async req => {
   const tag = await getByName(req.args[0]);
+  const member = await req.member;
 
-  if (userHasRole(req.member, tag.id)) return req.reply("You're already subscribed to '{0}'", tag.name);
-  await req.member.roles.add(tag.id);
+  if (userHasRole(member, tag.id)) return req.reply("You're already subscribed to '{0}'", tag.name);
+  await member.roles.add(tag.id);
 
-  debug(`Added role '${tag.name}' to ${req.member.displayName}`)
+  debug(`Added role '${tag.name}' to ${member.displayName}`)
   return req.reply("You have been subscribed to '{0}'", tag.name);
 }, errorHandlers);
 
@@ -41,11 +42,12 @@ export const add = request(async req => {
  */
 export const remove = request(async req => {
   const tag = await getByName(req.args[0]);
+  const member = await req.member;
 
-  if (!userHasRole(req.member, tag.id)) return req.reply("You're already subscribed to '{0}'", tag.name);
-  await req.member.roles.remove(tag.id);
+  if (!userHasRole(member, tag.id)) return req.reply("You're already subscribed to '{0}'", tag.name);
+  await member.roles.remove(tag.id);
   
-  debug(`Removed role '${tag.name}' from ${req.member.displayName}`)
+  debug(`Removed role '${tag.name}' from ${member.displayName}`)
   return req.reply("You have been unsubscribed from '{0}'", tag.name);
 });
 
