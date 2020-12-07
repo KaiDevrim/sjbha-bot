@@ -8,7 +8,7 @@ import { share } from "rxjs/operators";
 
 const fit$ = message$.pipe(cmd("fit"));
 const strava$ = fit$.pipe(
-  restrict(channels.strava), 
+  restrict(channels.strava, channels.bot_admin), 
   share()
 );
 
