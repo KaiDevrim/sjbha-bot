@@ -10,6 +10,7 @@ import { getUserByStravaId, saveUser, getUser } from "../domain/user/UserReposit
 import { getActivityByStravaId } from "../domain/strava/ActivityRepository";
 import { getCurrentLogsForUser, insertWorkout } from "../domain/exp/WorkoutLogRepository";
 import Workout from "../domain/exp/WorkoutLog";
+import { DateTime } from "luxon";
 
 // We extend request object for authorized requests
 interface AuthorizedRequest extends express.Request {
@@ -19,6 +20,13 @@ interface AuthorizedRequest extends express.Request {
 // mini util to await a certain milliseconds
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const recent_ids: string[] = [];
+const add_id = (id: string) => { 
+  recent_ids.push(id);
+  if (recent_ids.length > 100) {
+    recent_ids.shift();
+  }
+}
 /** 
  * When an athlete posts an activity, this webhook is called with the owner ID and activity ID.
  * We need to add it to the profile data, and then send the embed to the channel
@@ -38,15 +46,23 @@ export async function postActivity(req: express.Request, res: express.Response) 
 
   // We only care when an activity is created
   if (eventType !== "create") return;
+  if (recent_ids.includes(activityId)) return;
 
   try {
     // Only wait if in production
     IS_PRODUCTION && await wait(post_delay_ms);
 
+    // Prevent double posting
+    add_id(activityId);
+
     const [user, activity] = await Promise.all([
       getUserByStravaId(stravaId),
       getActivityByStravaId(stravaId, activityId)
     ]);
+    
+    // Check if the activity is too old to post
+    const diffHours = activity.timestamp.diff(DateTime.local(), "hours").hours;
+    if (diffHours < 36) return;
 
     // Preform update
     const exp = user.addActivity(activity);
