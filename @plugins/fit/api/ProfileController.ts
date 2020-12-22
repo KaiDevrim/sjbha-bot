@@ -46,7 +46,10 @@ export async function postActivity(req: express.Request, res: express.Response) 
 
   // We only care when an activity is created
   if (eventType !== "create") return;
-  if (recent_ids.includes(activityId)) return;
+  if (recent_ids.includes(activityId)) {
+    debug("Ignoring '%o' because it's already listed in recent_ids", activityId);
+    return;
+  }
 
   try {
     // Only wait if in production
@@ -62,7 +65,10 @@ export async function postActivity(req: express.Request, res: express.Response) 
     
     // Check if the activity is too old to post
     const diffHours = activity.timestamp.diff(DateTime.local(), "hours").hours;
-    if (diffHours < 36) return;
+    if (diffHours < -36) {
+      debug("Not posting '%o' because it was recorded too long ago (diff: %o timestamp %o)", activityId, diffHours, activity.timestamp.toString());
+      return;
+    }
 
     // Preform update
     const exp = user.addActivity(activity);
