@@ -49,14 +49,14 @@ export async function postActivity(req: express.Request, res: express.Response) 
   if (recent_ids.includes(activityId)) {
     debug("Ignoring '%o' because it's already listed in recent_ids", activityId);
     return;
+  } else {
+    // prevent double posting
+    add_id(activityId);
   }
 
   try {
     // Only wait if in production
     IS_PRODUCTION && await wait(post_delay_ms);
-
-    // Prevent double posting
-    add_id(activityId);
 
     const [user, activity] = await Promise.all([
       getUserByStravaId(stravaId),

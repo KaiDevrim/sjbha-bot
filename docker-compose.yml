@@ -3,12 +3,10 @@ version: '2.0'
 services:
   sjbha-app:
     build: .
+    command: npm start
     environment:
       NODE_ENV: "production"
       DEBUG: "@services*,@app:*,@plugins:*"
-      HOSTNAME: "https://sjbha.s3bby.com"
-      VIRTUAL_HOST: "sjbha.s3bby.com"
-      VIRTUAL_PORT: 5000
     env_file: ./.env
 
     ports:
