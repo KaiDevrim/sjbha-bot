@@ -19,6 +19,10 @@ interface AuthorizedRequest extends express.Request {
 
 // mini util to await a certain milliseconds
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const logAndRethrow = (msg: string) => (error: any) => {
+  debug(msg + ": " + (error.message || "Unknown"));
+  throw error;
+}
 
 const recent_ids: string[] = [];
 const add_id = (id: string) => { 
@@ -40,12 +44,15 @@ export async function postActivity(req: express.Request, res: express.Response) 
   const activityId = String(req.body["object_id"]);
   const eventType = <string>req.body["aspect_type"];
 
-  debug("webhook request, activityId: %o eventType: %o", activityId, eventType);
+  debug("webhook request, stravaId: [%o] activityId: [%o] eventType: %o", stravaId, activityId, eventType);
 
   res.status(200).send("Thanks!");
 
   // We only care when an activity is created
-  if (eventType !== "create") return;
+  if (eventType !== "create") {
+    debug("Ignoring '%o' because event type is not 'create' (%o)", activityId, eventType);
+    return;
+  }
   if (recent_ids.includes(activityId)) {
     debug("Ignoring '%o' because it's already listed in recent_ids", activityId);
     return;
@@ -58,10 +65,12 @@ export async function postActivity(req: express.Request, res: express.Response) 
     // Only wait if in production
     IS_PRODUCTION && await wait(post_delay_ms);
 
+    debug("Fetching user data");
     const [user, activity] = await Promise.all([
       getUserByStravaId(stravaId),
       getActivityByStravaId(stravaId, activityId)
-    ]);
+    ])
+    .catch(logAndRethrow("Failed to load user and activity data from Strava"));
     
     // Check if the activity is too old to post
     const diffHours = activity.timestamp.diff(DateTime.local(), "hours").hours;
@@ -78,11 +87,14 @@ export async function postActivity(req: express.Request, res: express.Response) 
     await Promise.all([
       saveUser(user),
       insertWorkout(workout)
-    ]);
+    ])
+    .catch(logAndRethrow("Something went wrong when trying to save user or workout into DB"));
 
     // Now lets send off an embed
-    const discordUser = await bastion.getMember(user.id);
-    const weekly = await getCurrentLogsForUser(user.id);
+    const discordUser = await bastion.getMember(user.id)
+      .catch(logAndRethrow("Unable to get Member info from bastion [userId: " + user.id + "]"));
+    const weekly = await getCurrentLogsForUser(user.id)
+      .catch(logAndRethrow("Failed to get current logs for user  [userId: " + user.id + "]"));;
 
     // Create embed
     const embed = createActivityEmbed({

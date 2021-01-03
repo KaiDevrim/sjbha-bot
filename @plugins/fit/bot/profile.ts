@@ -8,23 +8,22 @@ import {createProfileEmbed} from "./embeds/ProfileEmbed";
 // Display an over view of stats 
 //
 export async function profile(req: Request) {
-  const message = await req.reply("*Loading*");
   const member = await req.getMember();
 
-  const [user, summary] = await Promise.all([
-    getUser(req.author.id),
-    getActivitySummary(req.author.id)
-  ]);
+  const user = await getUser(req.author.id)
+    .catch(() => null);
+
+  if (!user) {
+    return req.reply("You have not set up your account with the bot. Use `!fit auth` to get started!")
+  }
+
+  const summary = await getActivitySummary(req.author.id);
 
   const embed = createProfileEmbed({
     member,
     user      : user.getProfile(),
     activities: summary.getDetails()
   });
-
-  message.delete();
-
-  console.log(embed);
   
   await req.reply({embed});
 }

@@ -2,6 +2,7 @@ import * as Discord from "discord.js";
 import format from "string-format";
 import Bastion from "./Bastion";
 
+type MessageOptions = Discord.MessageOptions & {split?: undefined};
 export default class Request {
   public readonly bastion: Bastion;
   public readonly message: Discord.Message;
@@ -45,14 +46,14 @@ export default class Request {
 
   /** Reply directly to the incoming message */
   reply(msg: string): Promise<Discord.Message>;
-  reply(options: Discord.MessageOptions): Promise<Discord.Message>;
+  reply(options: MessageOptions): Promise<Discord.Message>;
   reply(template: string, ...formats: string[]): Promise<Discord.Message>;
-  reply(msg: string|Discord.MessageOptions, ...str: string[]): Promise<Discord.Message> {
+  reply(msg: string|MessageOptions, ...str: string[]): Promise<Discord.Message> {
     if (typeof msg === "string" && Array.isArray(str)) {
       msg = format(msg, ...str);
     }
 
-    return this.message.channel.send(msg);
+    return this.bastion.sendTo(this.message.channel.id, msg);
   }
 
   getMember = (discordId?: string) => {

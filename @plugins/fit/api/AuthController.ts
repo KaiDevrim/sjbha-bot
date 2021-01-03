@@ -108,15 +108,12 @@ export async function authAccept(req: express.Request, res: express.Response) {
 
     res.redirect(url_settings);
   } catch (e) {
+    debug("Failed to accept token: %o", e.message);
+    console.error(e);
+
     switch (e.name) {
-    case NotConnected.type: return res.send(`Something went wrong when trying to authorize your acount. Try using !strava auth once again`)
-
-    default:
-      debug("Token acceptance failed");
-      console.error(e);
-
-      return res.send("Something unexpected went wrong and your account couldn't be connected");
-
+    case NotConnected.type: return res.send(`Something went wrong when trying to authorize your acount. Try using !strava auth once again`);
+    default:return res.send("Something unexpected went wrong and your account couldn't be connected");
     }
   }
 }
