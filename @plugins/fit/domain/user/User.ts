@@ -40,7 +40,7 @@ export default class User {
   }
 
   // actions
-  updateGender(gender: string) {
+  updateGender(gender: string|null) {
     debug("%o update gender to %o", this.id, gender);
     this.profile.updateGender(gender);
   }
