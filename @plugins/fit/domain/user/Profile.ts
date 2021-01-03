@@ -16,11 +16,12 @@ export default class Profile {
     return this._gender;
   }
 
-  public updateGender(gender: string) {
+  public updateGender(gender: string|null) {
     debug("update gender to %o", gender)
 
-    if (gender !== "M" && gender !== "F") {
-      throw new Error(`Invalid gender provided: '${gender}'`);
+    if (!gender) {
+      // Default to male emojis
+      gender = "M";
     }
 
     this._gender = gender;

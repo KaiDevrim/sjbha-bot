@@ -3,7 +3,7 @@ export interface AuthResponse {
   access_token: string;
   athlete: { 
     id: number; 
-    sex: 'M'|'F';
+    sex: null|'M'|'F';
   }  
 }
 
