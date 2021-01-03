@@ -88,8 +88,21 @@ export async function authLogin(req: AuthorizedRequest, res: express.Response) {
 export async function authAccept(req: express.Request, res: express.Response) {
   const code = <string>req.query.code;
   const connectHash = <string>req.query.state;
+  const scope = <string>req.query.scope;
 
   if (!code || !connectHash) return res.send("Invalid token");
+
+  const scopes = scope.split(",");
+  if (!scopes.includes("activity:read_all") || !scopes.includes("profile:read_all")) {
+    return res.send(`
+      Authorization failed, the bot won't work unless you accept both permissions
+      <ul>
+        <li><b>View your complete Strava profile</b> - This permission is needed to access heart rate data</li>
+        <li><b>View data about your private activities</b> - This permission is needed to get accurate distance measurement for when you opt in for private zones</li>
+      </ul>
+      If you want to redo it, click on the auth url again in your DMs and re-auth. If you aren't okay with this, voice concerns with @s3b and I'll try to find a better approach for fit v3
+    `)
+  }
 
   const [discordId, password] = connectHash.split(".");
   debug("Accepting token for %o", discordId);

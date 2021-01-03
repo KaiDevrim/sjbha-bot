@@ -4,6 +4,9 @@ import * as urls from "../urls";
 const checkLogin = async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
+  const scope = urlParams.get('scope');
+
+  console.log(urlParams);
 
   const res = await fetch(urls.LOGIN_API, {
     method: "POST",
@@ -18,11 +21,7 @@ const checkLogin = async () => {
       localStorage.setItem("discordId", json.discordId);
       localStorage.setItem("auth-token", json.token);
 
-      if (json.isConnected) {
-        window.location.href = urls.SETTINGS;
-      } else {
-        window.location.href = json.authUrl;
-      }
+      window.location.href = json.authUrl;
       break;
 
     case 401:
